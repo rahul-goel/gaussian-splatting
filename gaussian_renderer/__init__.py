@@ -65,6 +65,14 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         scales = pc.get_scaling
         rotations = pc.get_rotation
 
+    if pc.decoder == "tcnn_mlp" or pc.decoder == "pytorch_mlp":
+        # Compute viewdirections using the means of Gaussians and the Camera Center.
+        dir = torch.nn.functional.normalize(means3D - raster_settings.campos)
+        dir = (dir + 1.0) / 2.0
+        encoded_dir = pc.direction_encoder(dir)
+        color_features = torch.cat([encoded_dir, pc.get_latents], -1)
+        override_color = pc.color_net(color_features).float()
+
     # If precomputed colors are provided, use them. Otherwise, if it is desired to precompute colors
     # from SHs in Python, do it. If not, then SH -> RGB conversion will be done by rasterizer.
     shs = None

@@ -22,6 +22,7 @@ parser.add_argument("--skip_training", action="store_true")
 parser.add_argument("--skip_rendering", action="store_true")
 parser.add_argument("--skip_metrics", action="store_true")
 parser.add_argument("--output_path", default="./eval")
+parser.add_argument("--decoder", type=str, default="sh")
 args, _ = parser.parse_known_args()
 
 all_scenes = []
@@ -40,16 +41,16 @@ if not args.skip_training:
     common_args = " --quiet --eval --test_iterations -1 "
     for scene in mipnerf360_outdoor_scenes:
         source = args.mipnerf360 + "/" + scene
-        os.system("python train.py -s " + source + " -i images_4 -m " + args.output_path + "/" + scene + common_args)
+        os.system("python train.py -s " + source + " -i images_4 -m " + args.output_path + "/" + scene + " --decoder " + args.decoder + common_args)
     for scene in mipnerf360_indoor_scenes:
         source = args.mipnerf360 + "/" + scene
-        os.system("python train.py -s " + source + " -i images_2 -m " + args.output_path + "/" + scene + common_args)
+        os.system("python train.py -s " + source + " -i images_2 -m " + args.output_path + "/" + scene + " --decoder " + args.decoder + common_args)
     for scene in tanks_and_temples_scenes:
         source = args.tanksandtemples + "/" + scene
-        os.system("python train.py -s " + source + " -m " + args.output_path + "/" + scene + common_args)
+        os.system("python train.py -s " + source + " -m " + args.output_path + "/" + scene + " --decoder " + args.decoder + common_args)
     for scene in deep_blending_scenes:
         source = args.deepblending + "/" + scene
-        os.system("python train.py -s " + source + " -m " + args.output_path + "/" + scene + common_args)
+        os.system("python train.py -s " + source + " -m " + args.output_path + "/" + scene + " --decoder " + args.decoder + common_args)
 
 if not args.skip_rendering:
     all_sources = []
@@ -64,8 +65,8 @@ if not args.skip_rendering:
 
     common_args = " --quiet --eval --skip_train"
     for scene, source in zip(all_scenes, all_sources):
-        os.system("python render.py --iteration 7000 -s " + source + " -m " + args.output_path + "/" + scene + common_args)
-        os.system("python render.py --iteration 30000 -s " + source + " -m " + args.output_path + "/" + scene + common_args)
+        os.system("python render.py --iteration 7000 -s " + source + " -m " + args.output_path + "/" + scene + " --decoder " + args.decoder + common_args)
+        os.system("python render.py --iteration 30000 -s " + source + " -m " + args.output_path + "/" + scene + " --decoder " + args.decoder + common_args)
 
 if not args.skip_metrics:
     scenes_string = ""

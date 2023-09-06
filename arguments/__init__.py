@@ -46,6 +46,7 @@ class ParamGroup:
 
 class ModelParams(ParamGroup): 
     def __init__(self, parser, sentinel=False):
+        self.decoder = "sh"
         self.sh_degree = 3
         self._source_path = ""
         self._model_path = ""
@@ -76,6 +77,9 @@ class OptimizationParams(ParamGroup):
         self.position_lr_delay_mult = 0.01
         self.position_lr_max_steps = 30_000
         self.feature_lr = 0.0025
+        self.latents_lr = 0.0025
+        self.color_net_lr_init = 1e-5
+        self.color_net_lr_final = 1e-8
         self.opacity_lr = 0.05
         self.scaling_lr = 0.005
         self.rotation_lr = 0.001

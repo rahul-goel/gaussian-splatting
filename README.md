@@ -1,3 +1,49 @@
+# Details about changes
+
+- There are two different MLPs added:
+  - tiny-cuda-nn MLP: It only has the weight terms like in InstantNGP, NRC, K-Planes, etc.
+  - PyTorch MLP: It has both weigh and bias terms like in DVGO, TensoRF, etc.
+- The view-directions are encoded using SH-encoding of degree 4 as done by InstantNGP. The encoding and the MLP architecture is defined in `scene/gaussian_model` within the `__init__` function.
+- I've defined a separate optimizer for the MLP weights for more convenience.
+- The actual forward computation is happening in the file `gaussian_renderer/__init__.py`
+- The learning rates for the new components are defined in `arguments/__init__.py`
+- The optimizer step for the new components are happening in `train.py` file.
+- The latent vectors are saved in the Ply file itself. The MLP weights are saved separately in a `color_net.pt` file.
+
+# How to run
+This requies `tiny-cuda-nn` with it's PyTorch bindings:
+```
+pip install git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindings/torch
+```
+If this fails, please refer to this: https://github.com/NVlabs/tiny-cuda-nn
+
+There is an argument called `--decoder` added to the runner scripts:
+- `--decoder sh` Uses Spherical Harmonics i.e. same as original gaussian splatting.
+- `--decoder tcnn_mlp` Uses tiny-cuda-nn MLP (only weights) to decode color.
+- `--decoder pytorch_mlp` Uses PyTorch MLP (both weights and biases) to decoder color.
+
+The following are the commands that I've been using:
+
+Training command:
+```
+python train.py --eval -s path_to_scene -m path_to_output --decoder tcnn_mlp
+```
+
+Rendering command:
+```
+python render.py --eval -s path_to_scene -m path_to_output --decoder tcnn_mlp --skip_train
+```
+
+Metrics command:
+```
+python metrics.py -m path_to_output
+```
+
+You can also use the full eval command:
+```
+python full_eval.py ORIGINAL_ARGUMENTS --decoder tcnn_mlp
+```
+
 # 3D Gaussian Splatting for Real-Time Radiance Field Rendering
 Bernhard Kerbl*, Georgios Kopanas*, Thomas Leimkühler, George Drettakis (* indicates equal contribution)<br>
 | [Webpage](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/) | [Full Paper](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/3d_gaussian_splatting_high.pdf) | [Video](https://youtu.be/T_kXY43VZnk) | [Other GRAPHDECO Publications](http://www-sop.inria.fr/reves/publis/gdindex.php) | [FUNGRAPH project page](https://fungraph.inria.fr) |<br>
