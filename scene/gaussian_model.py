@@ -101,7 +101,7 @@ class GaussianModel:
             self._features_dc,
             self._features_rest,
             self._latents,
-            self.color_net.state_dict(),
+            self.color_net.state_dict() if self.color_net else None,
             self._scaling,
             self._rotation,
             self._opacity,
@@ -109,6 +109,7 @@ class GaussianModel:
             self.xyz_gradient_accum,
             self.denom,
             self.optimizer.state_dict(),
+            self.color_net_optimizer.state_dict() if self.color_net_optimizer else None,
             self.spatial_lr_scale,
         )
     
@@ -126,12 +127,16 @@ class GaussianModel:
         xyz_gradient_accum, 
         denom,
         opt_dict, 
+        color_net_opt_dict,
         self.spatial_lr_scale) = model_args
         self.training_setup(training_args)
-        self.color_net.load_state_dict(color_net_dict)
+        if self.color_net:
+            self.color_net.load_state_dict(color_net_dict)
         self.xyz_gradient_accum = xyz_gradient_accum
         self.denom = denom
         self.optimizer.load_state_dict(opt_dict)
+        if self.color_net_optimizer:
+            self.color_net_optimizer.load_state_dict(color_net_opt_dict)
 
     @property
     def get_scaling(self):
@@ -165,6 +170,12 @@ class GaussianModel:
     def oneupSHdegree(self):
         if self.active_sh_degree < self.max_sh_degree:
             self.active_sh_degree += 1
+    
+    def only_optimize_color(self):
+        self._xyz.requires_grad_(False)
+        self._opacity.requires_grad_(False)
+        self._scaling.requires_grad_(False)
+        self._rotation.requires_grad_(False)
 
     def create_from_pcd(self, pcd : BasicPointCloud, spatial_lr_scale : float):
         self.spatial_lr_scale = spatial_lr_scale
