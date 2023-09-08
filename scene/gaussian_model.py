@@ -81,7 +81,7 @@ class GaussianModel:
                         "activation": "ReLU",
                         "output_activation": "Sigmoid",
                         "n_neurons": 128,
-                        "n_hidden_layers": 4,
+                        "n_hidden_layers": 2,
                     },
                 )
             elif self.decoder == "pytorch_mlp":
