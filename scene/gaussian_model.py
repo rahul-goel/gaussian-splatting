@@ -243,10 +243,7 @@ class GaussianModel:
                                                     lr_delay_mult=training_args.position_lr_delay_mult,
                                                     max_steps=training_args.position_lr_max_steps)
         if self.decoder == "tcnn_mlp" or self.decoder == "pytorch_mlp":
-            self.color_net_scheduler_args = get_expon_lr_func(lr_init=training_args.color_net_lr_init,
-                                                              lr_final=training_args.color_net_lr_final,
-                                                              lr_delay_mult=0.01,
-                                                              max_steps=30000)
+            self.color_net_scheduler = lambda x: x * (0.1 ** (1/training_args.iterations))
 
     def update_learning_rate(self, iteration):
         ''' Learning rate scheduling per step '''
@@ -256,7 +253,7 @@ class GaussianModel:
                 param_group['lr'] = lr
         if self.decoder == "tcnn_mlp" or self.decoder == "pytorch_mlp":
             for param_group in self.color_net_optimizer.param_groups:
-                param_group['lr'] = param_group['lr'] * (0.1 ** (1/40000))
+                param_group['lr'] = self.color_net_scheduler(param_group['lr'])
 
     def construct_list_of_attributes(self):
         l = ['x', 'y', 'z', 'nx', 'ny', 'nz']
