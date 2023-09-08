@@ -81,7 +81,7 @@ class GaussianModel:
                         "activation": "ReLU",
                         "output_activation": "Sigmoid",
                         "n_neurons": 128,
-                        "n_hidden_layers": 2,
+                        "n_hidden_layers": 4,
                     },
                 )
             elif self.decoder == "pytorch_mlp":
@@ -91,7 +91,7 @@ class GaussianModel:
                     nn.Linear(128, 128), nn.ReLU(inplace=True),
                     nn.Linear(128, 3), nn.Sigmoid()
                 ).cuda()
-            self.color_net_optimizer = torch.optim.Adam(self.color_net.parameters())
+            self.color_net_optimizer = torch.optim.Adam(self.color_net.parameters(), lr=1e-3)
 
 
     def capture(self):
@@ -131,12 +131,21 @@ class GaussianModel:
         self.spatial_lr_scale) = model_args
         self.training_setup(training_args)
         if self.color_net:
-            self.color_net.load_state_dict(color_net_dict)
+            try:
+                self.color_net.load_state_dict(color_net_dict)
+            except:
+                print("WARNING: No color net dict found. Not restoring.")
         self.xyz_gradient_accum = xyz_gradient_accum
         self.denom = denom
-        self.optimizer.load_state_dict(opt_dict)
+        try:
+            self.optimizer.load_state_dict(opt_dict)
+        except:
+            print("WARNING: Optimizer dict doesn't match. Not restoring.")
         if self.color_net_optimizer:
-            self.color_net_optimizer.load_state_dict(color_net_opt_dict)
+            try:
+                self.color_net_optimizer.load_state_dict(color_net_opt_dict)
+            except:
+                print("WARNING: No color net dict found. Not restoring.")
 
     @property
     def get_scaling(self):
@@ -176,6 +185,7 @@ class GaussianModel:
         self._opacity.requires_grad_(False)
         self._scaling.requires_grad_(False)
         self._rotation.requires_grad_(False)
+        self._latents.requires_grad_(True)
 
     def create_from_pcd(self, pcd : BasicPointCloud, spatial_lr_scale : float):
         self.spatial_lr_scale = spatial_lr_scale
@@ -246,8 +256,7 @@ class GaussianModel:
                 param_group['lr'] = lr
         if self.decoder == "tcnn_mlp" or self.decoder == "pytorch_mlp":
             for param_group in self.color_net_optimizer.param_groups:
-                lr = self.color_net_scheduler_args(iteration)
-                param_group['lr'] = lr
+                param_group['lr'] = param_group['lr'] * (0.1 ** (1/40000))
 
     def construct_list_of_attributes(self):
         l = ['x', 'y', 'z', 'nx', 'ny', 'nz']
