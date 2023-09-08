@@ -22,6 +22,8 @@ There is an argument called `--decoder` added to the runner scripts:
 - `--decoder tcnn_mlp` Uses tiny-cuda-nn MLP (only weights) to decode color.
 - `--decoder pytorch_mlp` Uses PyTorch MLP (both weights and biases) to decoder color.
 
+Another argument `--train_color` has been added just to train colors in case of MLPs.
+
 The following are the commands that I've been using:
 
 Training command:
@@ -43,6 +45,15 @@ You can also use the full eval command:
 ```
 python full_eval.py ORIGINAL_ARGUMENTS --decoder tcnn_mlp
 ```
+
+## SH to MLP (Useful for 24GB GPUs)
+For training with SH for 30k iterations and then switching to MLP for another 10k iterations, we have to follow a slightly tedious procedure:
+```
+python train.py --eval -s path_to_scene -m path_to_output --decoder sh --checkpoint_iterations 30000
+python convert_ckpt.py --input path_to_output/chkpnt3000.pth --output path_to_output/chkpnt_mlp.pth
+python train.py --eval -s path_to_scene -m path_to_output --decoder tcnn_mlp --start_checkpoint path_to_output/chkpnt_mlp.pth --train_color --iter 40000
+```
+At the moment, due to this tedious procedure, I've not integrated this with full_eval.py :(. An alternate approach to this would have been to automatically transition from SH to MLP after some X number of iterations. But that would require some complicated handling of the optimizable tensors and cache cleaning. I found this simpler for experimentation.
 
 # 3D Gaussian Splatting for Real-Time Radiance Field Rendering
 Bernhard Kerbl*, Georgios Kopanas*, Thomas Leimkühler, George Drettakis (* indicates equal contribution)<br>
